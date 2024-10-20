@@ -27,129 +27,48 @@ const getTrailerUrl = (videos) => {
     return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null; // Return YouTube trailer URL
 };
 
-// GET trending movies this week
-router.get('/trending/movies/week', async (req, res) => {
-    try {
-        const response = await axios.get(`${TMDB_BASE_URL}/trending/movie/week`, {
+// Function to fetch trending movies and series
+const fetchTrending = async (type) => {
+    const endpoint = type === 'movies' ? 'trending/movie/week' : 'trending/tv/week';
+    const response = await axios.get(`${TMDB_BASE_URL}/${endpoint}`, {
+        params: {
+            api_key: process.env.TMDB_API_KEY,
+        },
+    });
+
+    return await Promise.all(response.data.results.map(async item => {
+        const videoResponse = await axios.get(`${TMDB_BASE_URL}/${type === 'movies' ? 'movie' : 'tv'}/${item.id}/videos`, {
             params: {
                 api_key: process.env.TMDB_API_KEY,
             },
         });
+        const trailerUrl = getTrailerUrl(videoResponse.data.results);
+        return {
+            id: item.id,
+            title: item.title || item.name,
+            poster_path: getImageUrl(item.poster_path),
+            trailer: trailerUrl,
+            type: type,
+        };
+    }));
+};
 
-        const movies = await Promise.all(response.data.results.map(async movie => {
-            const videoResponse = await axios.get(`${TMDB_BASE_URL}/movie/${movie.id}/videos`, {
-                params: {
-                    api_key: process.env.TMDB_API_KEY,
-                },
-            });
-            const trailerUrl = getTrailerUrl(videoResponse.data.results);
-            return {
-                id: movie.id,
-                title: movie.title,
-                poster_path: getImageUrl(movie.poster_path), // Changed to match your frontend expectations
-                trailer: trailerUrl, // Add trailer URL
-                type: 'movie', // Add type
-            };
-        }));
+// GET trending movies or series
+router.get('/:type', async (req, res) => {
+    const { type } = req.params;
 
-        res.json({ success: true, data: { items: movies } }); // Match frontend structure
-    } catch (error) {
-        handleError(res, error);
+    if (type !== 'movies' && type !== 'series') {
+        return res.status(400).json({ success: false, error: 'Invalid type' });
     }
-});
 
-// GET trending series this week
-router.get('/trending/series/week', async (req, res) => {
     try {
-        const response = await axios.get(`${TMDB_BASE_URL}/trending/tv/week`, {
-            params: {
-                api_key: process.env.TMDB_API_KEY,
-            },
-        });
-
-        const series = await Promise.all(response.data.results.map(async tvShow => {
-            const videoResponse = await axios.get(`${TMDB_BASE_URL}/tv/${tvShow.id}/videos`, {
-                params: {
-                    api_key: process.env.TMDB_API_KEY,
-                },
-            });
-            const trailerUrl = getTrailerUrl(videoResponse.data.results);
-            return {
-                id: tvShow.id,
-                title: tvShow.name,
-                poster_path: getImageUrl(tvShow.poster_path), // Changed to match your frontend expectations
-                trailer: trailerUrl, // Add trailer URL
-                type: 'series', // Add type
-            };
-        }));
-
-        res.json({ success: true, data: { items: series } }); // Match frontend structure
-    } catch (error) {
-        handleError(res, error);
-    }
-});
-
-// GET popular movies
-router.get('/popular/movies', async (req, res) => {
-    try {
-        const response = await axios.get(`${TMDB_BASE_URL}/movie/popular`, {
-            params: {
-                api_key: process.env.TMDB_API_KEY,
-                language: 'en-US',
-                page: 1,
-            },
-        });
-
-        const movies = await Promise.all(response.data.results.map(async movie => {
-            const videoResponse = await axios.get(`${TMDB_BASE_URL}/movie/${movie.id}/videos`, {
-                params: {
-                    api_key: process.env.TMDB_API_KEY,
-                },
-            });
-            const trailerUrl = getTrailerUrl(videoResponse.data.results);
-            return {
-                id: movie.id,
-                title: movie.title,
-                poster_path: getImageUrl(movie.poster_path), // Changed to match your frontend expectations
-                trailer: trailerUrl, // Add trailer URL
-                type: 'movie', // Add type
-            };
-        }));
-
-        res.json({ success: true, data: { items: movies } }); // Match frontend structure
-    } catch (error) {
-        handleError(res, error);
-    }
-});
-
-// GET popular series
-router.get('/popular/series', async (req, res) => {
-    try {
-        const response = await axios.get(`${TMDB_BASE_URL}/tv/popular`, {
-            params: {
-                api_key: process.env.TMDB_API_KEY,
-                language: 'en-US',
-                page: 1,
-            },
-        });
-
-        const series = await Promise.all(response.data.results.map(async tvShow => {
-            const videoResponse = await axios.get(`${TMDB_BASE_URL}/tv/${tvShow.id}/videos`, {
-                params: {
-                    api_key: process.env.TMDB_API_KEY,
-                },
-            });
-            const trailerUrl = getTrailerUrl(videoResponse.data.results);
-            return {
-                id: tvShow.id,
-                title: tvShow.name,
-                poster_path: getImageUrl(tvShow.poster_path), // Changed to match your frontend expectations
-                trailer: trailerUrl, // Add trailer URL
-                type: 'series', // Add type
-            };
-        }));
-
-        res.json({ success: true, data: { items: series } }); // Match frontend structure
+        const collections = await fetchTrending(type);
+        const hero = collections.length > 0 ? collections[0] : null; // Example hero, modify as needed
+        const data = {
+            collections: [{ title: 'Trending', items: collections }], // Wrap collections in an array
+            hero: hero,
+        };
+        res.json({ success: true, data });
     } catch (error) {
         handleError(res, error);
     }
@@ -182,8 +101,8 @@ router.get('/search', async (req, res) => {
             return {
                 id: item.id,
                 title: item.title || item.name,
-                poster_path: getImageUrl(item.poster_path), // Changed to match your frontend expectations
-                trailer: trailerUrl, // Add trailer URL
+                poster_path: getImageUrl(item.poster_path),
+                trailer: trailerUrl,
                 type: type,
             };
         }));
@@ -194,5 +113,4 @@ router.get('/search', async (req, res) => {
     }
 });
 
-// Export the router
 module.exports = router;
