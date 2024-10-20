@@ -1,5 +1,3 @@
-// src/routes/movies.js
-
 const express = require('express');
 const axios = require('axios');
 
@@ -7,7 +5,7 @@ const router = express.Router();
 
 // Middleware to handle errors
 const handleError = (res, error) => {
-    console.error(error);
+    console.error(error.response ? error.response.data : error.message);
     res.status(500).json({ error: 'Failed to fetch data' });
 };
 
@@ -154,14 +152,18 @@ router.get('/upcoming/series', async (req, res) => {
     }
 });
 
-// Search movies or series
+// Search for movies and series
 router.get('/search', async (req, res) => {
-    const { query } = req.query; // Expecting a query parameter for search
+    const { query, type } = req.query; // Expecting query and type (movie/tv)
+    if (!query || !type) {
+        return res.status(400).json({ error: 'Query and type are required' });
+    }
+
     try {
-        const response = await axios.get(`${TMDB_BASE_URL}/search/multi`, {
+        const response = await axios.get(`${TMDB_BASE_URL}/search/${type}`, {
             params: {
                 api_key: process.env.TMDB_API_KEY,
-                query,
+                query: query,
                 language: 'en-US',
                 page: 1,
             },
