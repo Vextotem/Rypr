@@ -1,9 +1,12 @@
+// server.js
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const moviesRouter = require('./src/routes/movies'); // Import the movies router
+const moviesRouter = require('./src/routes/movies'); // Adjust the path if necessary
 
 dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
