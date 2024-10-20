@@ -5,7 +5,13 @@ const router = express.Router();
 
 // Middleware to handle errors
 const handleError = (res, error) => {
-    console.error(error.response ? error.response.data : error.message);
+    console.error('Error details:', error);
+    if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Status:', error.response.status);
+    } else {
+        console.error('Error message:', error.message);
+    }
     res.status(500).json({ error: 'Failed to fetch data' });
 };
 
@@ -13,21 +19,18 @@ const handleError = (res, error) => {
 const TMDB_BASE_URL = process.env.TMDB_BASE_URL;
 
 // Helper function to construct image URLs
-const getImageUrl = (path) => `https://image.tmdb.org/t/p/w500${path}`;
+const getImageUrl = (path) => path ? `https://image.tmdb.org/t/p/w500${path}` : null;
 
 // GET trending movies this week
 router.get('/trending/movies/week', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/trending/movie/week`, {
-            params: {
-                api_key: process.env.TMDB_API_KEY,
-            },
+            params: { api_key: process.env.TMDB_API_KEY },
         });
-        
-        // Map the results to include the image URL
+
         const movies = response.data.results.map(movie => ({
             ...movie,
-            poster_path: getImageUrl(movie.poster_path), // Add the image URL
+            poster_path: getImageUrl(movie.poster_path),
         }));
 
         res.json({ ...response.data, results: movies });
@@ -40,14 +43,12 @@ router.get('/trending/movies/week', async (req, res) => {
 router.get('/trending/series/week', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/trending/tv/week`, {
-            params: {
-                api_key: process.env.TMDB_API_KEY,
-            },
+            params: { api_key: process.env.TMDB_API_KEY },
         });
-        
+
         const series = response.data.results.map(tv => ({
             ...tv,
-            poster_path: getImageUrl(tv.poster_path), // Add the image URL
+            poster_path: getImageUrl(tv.poster_path),
         }));
 
         res.json({ ...response.data, results: series });
@@ -66,10 +67,10 @@ router.get('/popular/movies', async (req, res) => {
                 page: 1,
             },
         });
-        
+
         const movies = response.data.results.map(movie => ({
             ...movie,
-            poster_path: getImageUrl(movie.poster_path), // Add the image URL
+            poster_path: getImageUrl(movie.poster_path),
         }));
 
         res.json({ ...response.data, results: movies });
@@ -91,7 +92,7 @@ router.get('/popular/series', async (req, res) => {
 
         const series = response.data.results.map(tv => ({
             ...tv,
-            poster_path: getImageUrl(tv.poster_path), // Add the image URL
+            poster_path: getImageUrl(tv.poster_path),
         }));
 
         res.json({ ...response.data, results: series });
@@ -115,7 +116,5 @@ router.get('/movies/:id/videos', async (req, res) => {
         handleError(res, error);
     }
 });
-
-// Add other endpoints (trending networks, top-rated series, etc.) in a similar fashion...
 
 module.exports = router;
