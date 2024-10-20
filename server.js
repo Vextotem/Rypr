@@ -1,31 +1,29 @@
 const express = require('express');
-const dotenv = require('dotenv');
-const axios = require('axios');
 const cors = require('cors');
+const dotenv = require('dotenv');
+const helmet = require('helmet');
 
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS for all requests
-app.use(cors());
+// Middleware
+app.use(cors()); // Enables CORS for all origins
+app.use(express.json()); // Parses JSON request bodies
+app.use(helmet()); // Adds security-related HTTP headers
 
-// Example endpoint to get movie details from TMDB
-app.get('/api/movie/:id', async (req, res) => {
-    const movieId = req.params.id;
-        const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${process.env.TMDB_API_KEY}`;
+// Import routes
+const moviesRouter = require('./src/routes/movies');
 
-            try {
-                    const response = await axios.get(url);
-                            res.json(response.data);
-                                } catch (error) {
-                                        console.error(error);
-                                                res.status(500).send('Error fetching data from TMDB');
-                                                    }
-                                                    });
+// Use the movies router for API endpoints
+app.use('/api/movies', moviesRouter);
 
-                                                    // Start the server
-                                                    app.listen(PORT, () => {
-                                                        console.log(`Server is running on http://localhost:${PORT}`);
-                                                        });
+// Catch-all route for unmatched requests
+app.get('*', (req, res) => {
+    res.status(404).json({ success: false, error: 'Endpoint not found' }); // Added success field
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
