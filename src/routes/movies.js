@@ -1,3 +1,5 @@
+// src/routes/movies.js
+
 const express = require('express');
 const axios = require('axios');
 
@@ -152,17 +154,16 @@ router.get('/upcoming/series', async (req, res) => {
     }
 });
 
-// GET search movies or series
+// Search movies or series
 router.get('/search', async (req, res) => {
-    const { query } = req.query; // Expect a query parameter named 'query'
+    const { query } = req.query; // Expecting a query parameter for search
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/search/multi`, {
             params: {
                 api_key: process.env.TMDB_API_KEY,
+                query,
                 language: 'en-US',
-                query: query,
                 page: 1,
-                include_adult: false,
             },
         });
         res.json(response.data);
