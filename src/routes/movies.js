@@ -1,6 +1,15 @@
 const express = require('express');
 const axios = require('axios');
-const router = express.Router();
+const cors = require('cors');
+const dotenv = require('dotenv');
+
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
 
 // TMDB API URL
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
@@ -12,7 +21,7 @@ const handleError = (res, error) => {
 };
 
 // GET trending movies this week
-router.get('/trending/movies/week', async (req, res) => {
+app.get('/api/movies/trending/movies/week', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/trending/movie/week`, {
             params: {
@@ -26,7 +35,7 @@ router.get('/trending/movies/week', async (req, res) => {
 });
 
 // GET trending series this week
-router.get('/trending/series/week', async (req, res) => {
+app.get('/api/movies/trending/series/week', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/trending/tv/week`, {
             params: {
@@ -40,7 +49,7 @@ router.get('/trending/series/week', async (req, res) => {
 });
 
 // GET popular movies
-router.get('/popular/movies', async (req, res) => {
+app.get('/api/movies/popular/movies', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/movie/popular`, {
             params: {
@@ -56,7 +65,7 @@ router.get('/popular/movies', async (req, res) => {
 });
 
 // GET popular series
-router.get('/popular/series', async (req, res) => {
+app.get('/api/movies/popular/series', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/tv/popular`, {
             params: {
@@ -72,7 +81,7 @@ router.get('/popular/series', async (req, res) => {
 });
 
 // GET trending networks
-router.get('/trending/networks', async (req, res) => {
+app.get('/api/movies/trending/networks', async (req, res) => {
     // TMDB API does not have a direct endpoint for trending networks,
     // you may need to get this from trending series as a workaround
     try {
@@ -90,7 +99,7 @@ router.get('/trending/networks', async (req, res) => {
 });
 
 // GET top rated series
-router.get('/top-rated/series', async (req, res) => {
+app.get('/api/movies/top-rated/series', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/tv/top_rated`, {
             params: {
@@ -106,7 +115,7 @@ router.get('/top-rated/series', async (req, res) => {
 });
 
 // GET top rated movies
-router.get('/top-rated/movies', async (req, res) => {
+app.get('/api/movies/top-rated/movies', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/movie/top_rated`, {
             params: {
@@ -122,7 +131,7 @@ router.get('/top-rated/movies', async (req, res) => {
 });
 
 // GET upcoming movies
-router.get('/upcoming/movies', async (req, res) => {
+app.get('/api/movies/upcoming/movies', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/movie/upcoming`, {
             params: {
@@ -138,7 +147,7 @@ router.get('/upcoming/movies', async (req, res) => {
 });
 
 // GET upcoming series
-router.get('/upcoming/series', async (req, res) => {
+app.get('/api/movies/upcoming/series', async (req, res) => {
     try {
         const response = await axios.get(`${TMDB_BASE_URL}/tv/on_the_air`, {
             params: {
@@ -153,4 +162,7 @@ router.get('/upcoming/series', async (req, res) => {
     }
 });
 
-module.exports = router;
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
