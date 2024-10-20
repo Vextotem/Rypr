@@ -15,26 +15,6 @@ const TMDB_BASE_URL = process.env.TMDB_BASE_URL;
 // Helper function to construct image URLs
 const getImageUrl = (path) => `https://image.tmdb.org/t/p/w500${path}`;
 
-// Helper function to format collections for your frontend
-const formatCollections = (movies) => {
-    return [
-        {
-            title: 'Trending Movies',
-            items: movies.map(movie => ({
-                id: movie.id,
-                title: movie.title,
-                description: movie.overview,
-                images: {
-                    poster: getImageUrl(movie.poster_path),
-                    backdrop: getImageUrl(movie.backdrop_path),
-                    logo: getImageUrl(movie.poster_path), // Assuming logo is the poster for simplicity
-                },
-                type: 'movie',
-            })),
-        },
-    ];
-};
-
 // GET trending movies this week
 router.get('/trending/movies/week', async (req, res) => {
     try {
@@ -43,19 +23,14 @@ router.get('/trending/movies/week', async (req, res) => {
                 api_key: process.env.TMDB_API_KEY,
             },
         });
-
+        
+        // Map the results to include the image URL
         const movies = response.data.results.map(movie => ({
             ...movie,
             poster_path: getImageUrl(movie.poster_path), // Add the image URL
         }));
 
-        res.json({
-            success: true,
-            data: {
-                hero: movies[0], // Set the first movie as the hero
-                collections: formatCollections(movies),
-            },
-        });
+        res.json({ ...response.data, results: movies });
     } catch (error) {
         handleError(res, error);
     }
@@ -69,19 +44,13 @@ router.get('/trending/series/week', async (req, res) => {
                 api_key: process.env.TMDB_API_KEY,
             },
         });
-
+        
         const series = response.data.results.map(tv => ({
             ...tv,
             poster_path: getImageUrl(tv.poster_path), // Add the image URL
         }));
 
-        res.json({
-            success: true,
-            data: {
-                hero: series[0], // Set the first series as the hero
-                collections: formatCollections(series),
-            },
-        });
+        res.json({ ...response.data, results: series });
     } catch (error) {
         handleError(res, error);
     }
@@ -97,19 +66,13 @@ router.get('/popular/movies', async (req, res) => {
                 page: 1,
             },
         });
-
+        
         const movies = response.data.results.map(movie => ({
             ...movie,
             poster_path: getImageUrl(movie.poster_path), // Add the image URL
         }));
 
-        res.json({
-            success: true,
-            data: {
-                hero: movies[0], // Set the first movie as the hero
-                collections: formatCollections(movies),
-            },
-        });
+        res.json({ ...response.data, results: movies });
     } catch (error) {
         handleError(res, error);
     }
@@ -131,13 +94,7 @@ router.get('/popular/series', async (req, res) => {
             poster_path: getImageUrl(tv.poster_path), // Add the image URL
         }));
 
-        res.json({
-            success: true,
-            data: {
-                hero: series[0], // Set the first series as the hero
-                collections: formatCollections(series),
-            },
-        });
+        res.json({ ...response.data, results: series });
     } catch (error) {
         handleError(res, error);
     }
