@@ -12,6 +12,11 @@ const handleError = (res, error) => {
 // TMDB API URL
 const TMDB_BASE_URL = process.env.TMDB_BASE_URL;
 
+// Function to get full image URL
+const getImageUrl = (path) => {
+    return path ? `https://image.tmdb.org/t/p/w500${path}` : null; // Adjust size as needed
+};
+
 // GET trending movies this week
 router.get('/trending/movies/week', async (req, res) => {
     try {
@@ -20,7 +25,15 @@ router.get('/trending/movies/week', async (req, res) => {
                 api_key: process.env.TMDB_API_KEY,
             },
         });
-        res.json(response.data);
+        
+        // Map response to include thumbnail URLs
+        const movies = response.data.results.map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            thumbnail: getImageUrl(movie.poster_path), // Add thumbnail URL
+        }));
+
+        res.json(movies);
     } catch (error) {
         handleError(res, error);
     }
@@ -34,7 +47,15 @@ router.get('/trending/series/week', async (req, res) => {
                 api_key: process.env.TMDB_API_KEY,
             },
         });
-        res.json(response.data);
+
+        // Map response to include thumbnail URLs
+        const series = response.data.results.map(tvShow => ({
+            id: tvShow.id,
+            title: tvShow.name,
+            thumbnail: getImageUrl(tvShow.poster_path), // Add thumbnail URL
+        }));
+
+        res.json(series);
     } catch (error) {
         handleError(res, error);
     }
@@ -50,7 +71,15 @@ router.get('/popular/movies', async (req, res) => {
                 page: 1,
             },
         });
-        res.json(response.data);
+
+        // Map response to include thumbnail URLs
+        const movies = response.data.results.map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            thumbnail: getImageUrl(movie.poster_path), // Add thumbnail URL
+        }));
+
+        res.json(movies);
     } catch (error) {
         handleError(res, error);
     }
@@ -66,7 +95,15 @@ router.get('/popular/series', async (req, res) => {
                 page: 1,
             },
         });
-        res.json(response.data);
+
+        // Map response to include thumbnail URLs
+        const series = response.data.results.map(tvShow => ({
+            id: tvShow.id,
+            title: tvShow.name,
+            thumbnail: getImageUrl(tvShow.poster_path), // Add thumbnail URL
+        }));
+
+        res.json(series);
     } catch (error) {
         handleError(res, error);
     }
@@ -98,7 +135,15 @@ router.get('/top-rated/series', async (req, res) => {
                 page: 1,
             },
         });
-        res.json(response.data);
+
+        // Map response to include thumbnail URLs
+        const series = response.data.results.map(tvShow => ({
+            id: tvShow.id,
+            title: tvShow.name,
+            thumbnail: getImageUrl(tvShow.poster_path), // Add thumbnail URL
+        }));
+
+        res.json(series);
     } catch (error) {
         handleError(res, error);
     }
@@ -114,7 +159,15 @@ router.get('/top-rated/movies', async (req, res) => {
                 page: 1,
             },
         });
-        res.json(response.data);
+
+        // Map response to include thumbnail URLs
+        const movies = response.data.results.map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            thumbnail: getImageUrl(movie.poster_path), // Add thumbnail URL
+        }));
+
+        res.json(movies);
     } catch (error) {
         handleError(res, error);
     }
@@ -130,7 +183,15 @@ router.get('/upcoming/movies', async (req, res) => {
                 page: 1,
             },
         });
-        res.json(response.data);
+
+        // Map response to include thumbnail URLs
+        const movies = response.data.results.map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            thumbnail: getImageUrl(movie.poster_path), // Add thumbnail URL
+        }));
+
+        res.json(movies);
     } catch (error) {
         handleError(res, error);
     }
@@ -146,7 +207,15 @@ router.get('/upcoming/series', async (req, res) => {
                 page: 1,
             },
         });
-        res.json(response.data);
+
+        // Map response to include thumbnail URLs
+        const series = response.data.results.map(tvShow => ({
+            id: tvShow.id,
+            title: tvShow.name,
+            thumbnail: getImageUrl(tvShow.poster_path), // Add thumbnail URL
+        }));
+
+        res.json(series);
     } catch (error) {
         handleError(res, error);
     }
@@ -168,7 +237,16 @@ router.get('/search', async (req, res) => {
                 page: 1,
             },
         });
-        res.json(response.data);
+
+        // Map response to include thumbnail URLs
+        const results = response.data.results.map(item => ({
+            id: item.id,
+            title: item.title || item.name,
+            thumbnail: getImageUrl(item.poster_path), // Add thumbnail URL
+            type: type,
+        }));
+
+        res.json(results);
     } catch (error) {
         handleError(res, error);
     }
