@@ -55,7 +55,7 @@ const fetchSeries = async (category) => {
 };
 
 // Series endpoint to fetch all series categories (Trending, Popular, Top Rated, On The Air)
-router.get('/browse', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         // Fetch data for each category
         const trendingSeries = await fetchSeries('trending');
