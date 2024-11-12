@@ -1,55 +1,81 @@
-// series.js
+// src/routes/series.js
+
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
-// Helper functions
-const getImageUrl = (path) => path ? `https://image.tmdb.org/t/p/w500${path}` : null;
-const getTrailerUrl = (videos) => {
-    const trailer = videos.find(video => video.type === 'Trailer' && video.site === 'YouTube');
-    return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
-};
+// Use your environment variables
+const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const TMDB_BASE_URL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 
-// Function to fetch series details by ID
-const fetchSeriesById = async (id) => {
-    const TMDB_BASE_URL = process.env.TMDB_BASE_URL;
+// Function to get TV series data from TMDB based on the type
+const fetchSeries = async (category) => {
     try {
-        const response = await axios.get(`${TMDB_BASE_URL}/tv/${id}`, {
+        let endpoint;
+
+        // Set the endpoint based on category
+        switch (category) {
+            case 'trending':
+                endpoint = '/trending/tv/week';
+                break;
+            case 'popular':
+                endpoint = '/tv/popular';
+                break;
+            case 'top_rated':
+                endpoint = '/tv/top_rated';
+                break;
+            case 'on_the_air':
+                endpoint = '/tv/on_the_air';
+                break;
+            default:
+                throw new Error('Invalid category');
+        }
+
+        // Fetch data from TMDB
+        const response = await axios.get(`${TMDB_BASE_URL}${endpoint}`, {
             params: {
-                api_key: process.env.TMDB_API_KEY,
+                api_key: TMDB_API_KEY,
                 language: 'en-US',
-            },
+                page: 1, // Modify page number if needed
+            }
         });
-        const videoResponse = await axios.get(`${TMDB_BASE_URL}/tv/${id}/videos`, {
-            params: {
-                api_key: process.env.TMDB_API_KEY,
-            },
-        });
-        const trailerUrl = getTrailerUrl(videoResponse.data.results);
-        
-        return {
-            id: response.data.id,
-            name: response.data.name,
-            overview: response.data.overview,
-            poster_path: getImageUrl(response.data.poster_path),
-            trailer: trailerUrl,
-            genres: response.data.genres.map(genre => genre.name),
-            seasons: response.data.seasons,
-        };
+
+        // Process the response to format the series data
+        return response.data.results.map(series => ({
+            id: series.id,
+            title: series.name,
+            overview: series.overview,
+            first_air_date: series.first_air_date,
+            poster_path: `https://image.tmdb.org/t/p/w500${series.poster_path}`,
+        }));
     } catch (error) {
-        throw new Error('Error fetching series details from TMDB');
+        console.error('Error fetching data from TMDB:', error.message);
+        throw error; // Rethrow error to handle it in the route
     }
 };
 
-// Define the /series/:id route
-router.get('/series/:id', async (req, res) => {
-    const { id } = req.params;
-
+// Series endpoint to fetch all series categories (Trending, Popular, Top Rated, On The Air)
+router.get('/browse', async (req, res) => {
     try {
-        const series = await fetchSeriesById(id);
-        res.json({ success: true, data: series });
+        // Fetch data for each category
+        const trendingSeries = await fetchSeries('trending');
+        const popularSeries = await fetchSeries('popular');
+        const topRatedSeries = await fetchSeries('top_rated');
+        const onTheAirSeries = await fetchSeries('on_the_air');
+
+        // Return the series data for each category in the response
+        res.json({
+            success: true,
+            data: {
+                trending: trendingSeries,
+                popular: popularSeries,
+                top_rated: topRatedSeries,
+                on_the_air: onTheAirSeries,
+            },
+        });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error fetching data:', error.message);
+        res.status(500).json({ success: false, error: 'Failed to fetch series' });
     }
 });
 
