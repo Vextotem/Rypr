@@ -8,20 +8,27 @@ const router = express.Router();
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 
-// Fetch movie/series details based on id and type (movie/tv)
+// Fetch movie/series/episode details based on id, type and episode number (if applicable)
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
-    const { type } = req.query; // The type query parameter should specify 'movie' or 'tv'
+    const { type, season, episode } = req.query; // type, season, and episode query parameters
 
     try {
         let endpoint = '';
         
+        // Handle movie type
         if (type === 'movie') {
             endpoint = `/movie/${id}`;
-        } else if (type === 'tv') {
+        } 
+        // Handle TV series type
+        else if (type === 'tv') {
             endpoint = `/tv/${id}`;
+        } 
+        // Handle episode type (requires season number and episode number)
+        else if (type === 'episode' && season && episode) {
+            endpoint = `/tv/${id}/season/${season}/episode/${episode}`;
         } else {
-            return res.status(400).json({ success: false, error: 'Invalid type. Must be "movie" or "tv"' });
+            return res.status(400).json({ success: false, error: 'Invalid type. Must be "movie", "tv", or "episode"' });
         }
 
         // Make the request to TMDB API
@@ -32,7 +39,7 @@ router.get('/:id', async (req, res) => {
             }
         });
 
-        // Return the movie or series details
+        // Return the movie, series, or episode details
         res.json({
             success: true,
             data: response.data,
