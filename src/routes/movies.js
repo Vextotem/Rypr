@@ -1,59 +1,81 @@
-// movie.js
+// src/routes/movies.js
+
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
-// Helper function to construct image URL
-const getImageUrl = (path) => {
-    return path ? `https://image.tmdb.org/t/p/w500${path}` : null;
-};
+// Use your environment variables
+const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const TMDB_BASE_URL = process.env.TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 
-// Helper function to get trailer URL from videos
-const getTrailerUrl = (videos) => {
-    const trailer = videos.find(video => video.type === 'Trailer' && video.site === 'YouTube');
-    return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
-};
-
-// Function to fetch movie details by ID
-const fetchMovieById = async (id) => {
-    const TMDB_BASE_URL = process.env.TMDB_BASE_URL;
+// Function to get movie data from TMDB based on the type
+const fetchMovies = async (category) => {
     try {
-        const response = await axios.get(`${TMDB_BASE_URL}/movie/${id}`, {
+        let endpoint;
+
+        // Set the endpoint based on category
+        switch (category) {
+            case 'trending':
+                endpoint = '/trending/movie/week';
+                break;
+            case 'popular':
+                endpoint = '/movie/popular';
+                break;
+            case 'top_rated':
+                endpoint = '/movie/top_rated';
+                break;
+            case 'upcoming':
+                endpoint = '/movie/upcoming';
+                break;
+            default:
+                throw new Error('Invalid category');
+        }
+
+        // Fetch data from TMDB
+        const response = await axios.get(`${TMDB_BASE_URL}${endpoint}`, {
             params: {
-                api_key: process.env.TMDB_API_KEY,
+                api_key: TMDB_API_KEY,
                 language: 'en-US',
-            },
+                page: 1, // Modify page number if needed
+            }
         });
 
-        const videoResponse = await axios.get(`${TMDB_BASE_URL}/movie/${id}/videos`, {
-            params: {
-                api_key: process.env.TMDB_API_KEY,
-            },
-        });
-
-        const trailerUrl = getTrailerUrl(videoResponse.data.results);
-
-        return {
-            id: response.data.id,
-            title: response.data.title,
-            overview: response.data.overview,
-            poster_path: getImageUrl(response.data.poster_path),
-            trailer: trailerUrl,
-        };
+        // Process the response to format the movie data
+        return response.data.results.map(movie => ({
+            id: movie.id,
+            title: movie.title,
+            overview: movie.overview,
+            release_date: movie.release_date,
+            poster_path: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+        }));
     } catch (error) {
-        throw new Error('Error fetching movie details from TMDB');
+        console.error('Error fetching data from TMDB:', error.message);
+        throw error; // Rethrow error to handle it in the route
     }
 };
 
-// Define the /movie/:id route
-router.get('/movie/:id', async (req, res) => {
-    const { id } = req.params;
-
+// Browse endpoint to fetch all movie categories (Trending, Popular, Top Rated, Upcoming)
+router.get('/browse', async (req, res) => {
     try {
-        const movie = await fetchMovieById(id);
-        res.json({ success: true, data: movie });
+        // Fetch data for each category
+        const trendingMovies = await fetchMovies('trending');
+        const popularMovies = await fetchMovies('popular');
+        const topRatedMovies = await fetchMovies('top_rated');
+        const upcomingMovies = await fetchMovies('upcoming');
+
+        // Return the movie data for each category in the response
+        res.json({
+            success: true,
+            data: {
+                trending: trendingMovies,
+                popular: popularMovies,
+                top_rated: topRatedMovies,
+                upcoming: upcomingMovies,
+            },
+        });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error fetching data:', error.message);
+        res.status(500).json({ success: false, error: 'Failed to fetch movies' });
     }
 });
 
