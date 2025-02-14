@@ -18,6 +18,7 @@ const browseRouter = require('./src/routes/browse');
 const seriesRouter = require('./src/routes/series');
 const episodesRouter = require('./src/routes/episodes');
 const searchRouter = require('./src/routes/search');
+const trailerRouter = require('./src/routes/trailer'); // Import the trailer router
 
 // Use the routers for API endpoints
 app.use('/api/movie', moviesRouter);
@@ -25,6 +26,7 @@ app.use('/api/browse', browseRouter);
 app.use('/api/series', seriesRouter);
 app.use('/api/episodes', episodesRouter);
 app.use('/api/search', searchRouter);
+app.use('/api/trailer', trailerRouter); // Add the trailer route
 
 // Catch-all route for unmatched requests
 app.get('*', (req, res) => {
