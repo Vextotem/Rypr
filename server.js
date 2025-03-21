@@ -13,15 +13,18 @@ app.use(express.json()); // Parses JSON request bodies
 app.use(helmet()); // Adds security-related HTTP headers
 
 // Import routes
-const moviesRouter = require('./src/routes/movie');
+const moviesRouter = require('./src/routes/movies'); // Movie trailer route
+const tvRouter = require('./src/routes/tv'); // TV show trailer route
 const browseRouter = require('./src/routes/browse');
 const seriesRouter = require('./src/routes/series');
 const episodesRouter = require('./src/routes/episodes');
 const searchRouter = require('./src/routes/search');
 const trailerRouter = require('./src/routes/trailer'); // Import the trailer router
 
+
 // Use the routers for API endpoints
-app.use('/api/movie', moviesRouter);
+app.use('/api/movies', moviesRouter); // Movie trailer route
+app.use('/api/tv', tvRouter); // TV show trailer route
 app.use('/api/browse', browseRouter);
 app.use('/api/series', seriesRouter);
 app.use('/api/episodes', episodesRouter);
