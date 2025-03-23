@@ -29,31 +29,37 @@ router.get('/:id', async (req, res) => {
         });
 
         // Find the first trailer (prioritizing "Official" trailers)
-        const trailer = response.data.results.find(video =>
+        let video = response.data.results.find(video =>
             video.type === 'Trailer' && video.site === 'YouTube'
         );
 
-        if (trailer) {
-            const trailerData = {
+        // If no trailer, find any video available
+        if (!video) {
+            video = response.data.results[0]; // Fallback to the first available video
+        }
+
+        if (video) {
+            const videoData = {
                 success: true,
                 mediaType: 'tv',
-                trailerUrl: `https://www.youtube.com/watch?v=${trailer.key}`
+                videoUrl: `https://www.youtube.com/watch?v=${video.key}`,
+                videoType: video.type || 'Video', // Adding type in case it's not a trailer
             };
 
             // Store in Redis cache for 1 hour (3600 seconds)
-            await redis.set(cacheKey, JSON.stringify(trailerData), 'EX', 3600);
+            await redis.set(cacheKey, JSON.stringify(videoData), 'EX', 3600);
 
-            return res.json(trailerData);
+            return res.json(videoData);
         } else {
             res.status(404).json({
                 success: false,
-                error: 'No trailer found for this TV show.'
+                error: 'No videos found for this TV show.'
             });
         }
     } catch (error) {
         res.status(500).json({
             success: false,
-            error: 'Error fetching trailer for TV show from TMDB.',
+            error: 'Error fetching video for TV show from TMDB.',
             details: error.response?.data || error.message
         });
     }
