@@ -10,6 +10,11 @@ router.get('/:id', async (req, res) => {
     const { id } = req.params;
     const apiKey = process.env.TMDB_API_KEY; // Ensure this is set in your .env file
 
+    // Check if the API key is missing
+    if (!apiKey) {
+        return res.status(500).json({ success: false, error: 'TMDB API key not set' });
+    }
+
     // Generate a unique cache key
     const cacheKey = `trailer:movie:${id}`;
 
@@ -25,6 +30,9 @@ router.get('/:id', async (req, res) => {
             params: {
                 api_key: apiKey,
                 language: 'en-US'
+            },
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36'
             }
         });
 
@@ -51,7 +59,7 @@ router.get('/:id', async (req, res) => {
                 mediaType: 'movie',
                 videoType: video.type,
                 videoName: video.name,
-                trailerUrl: `https://www.youtube-nocookie.com/watch?v=${video.key}`,
+                trailerUrl: `https://www.youtube-nocookie.com/embed/${video.key}`, // Use embed URL
                 isOfficial: video.official || false
             };
 
